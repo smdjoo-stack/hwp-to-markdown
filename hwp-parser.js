@@ -24,21 +24,45 @@ class HWPParser {
 
     extractText(data) {
         const textParts = [];
+        const decoder = new TextDecoder('utf-16le', { fatal: false });
 
-        // UTF-16LE 인코딩으로 텍스트 검색
+        // HWP 파일에서 텍스트 블록 찾기
+        let consecutiveValidChars = 0;
+        let tempBuffer = [];
+
         for (let i = 0; i < data.length - 1; i += 2) {
             try {
                 const char = String.fromCharCode(data[i] | (data[i + 1] << 8));
 
-                // 한글, 영문, 숫자, 공백, 기본 문장부호만 추출
-                if (this.isPrintableChar(char)) {
-                    textParts.push(char);
-                } else if (char === '\n' || char === '\r') {
-                    textParts.push(char);
+                if (this.isPrintableChar(char) || char === '\n' || char === '\r' || char === ' ') {
+                    tempBuffer.push(char);
+                    consecutiveValidChars++;
+
+                    // 연속된 유효 문자가 3개 이상이면 텍스트로 인정
+                    if (consecutiveValidChars >= 3) {
+                        textParts.push(...tempBuffer);
+                        tempBuffer = [];
+                    }
+                } else {
+                    // 유효하지 않은 문자를 만나면 버퍼 초기화
+                    if (consecutiveValidChars >= 3) {
+                        // 이미 추가된 텍스트는 유지
+                        consecutiveValidChars = 0;
+                    } else {
+                        // 짧은 버퍼는 버림
+                        tempBuffer = [];
+                        consecutiveValidChars = 0;
+                    }
                 }
             } catch (e) {
-                // 인코딩 오류 무시
+                tempBuffer = [];
+                consecutiveValidChars = 0;
             }
+        }
+
+        // 남은 버퍼 처리
+        if (consecutiveValidChars >= 3) {
+            textParts.push(...tempBuffer);
         }
 
         const rawText = textParts.join('');
@@ -48,14 +72,33 @@ class HWPParser {
     isPrintableChar(char) {
         const code = char.charCodeAt(0);
 
-        // 한글 범위
+        // 한글 완성형 (가-힣)
         if (code >= 0xAC00 && code <= 0xD7A3) return true;
 
-        // 영문, 숫자, 기본 문장부호
-        if (code >= 0x20 && code <= 0x7E) return true;
-
-        // 추가 한글 자모
+        // 한글 자모 (ㄱ-ㅎ, ㅏ-ㅣ)
         if (code >= 0x3131 && code <= 0x318E) return true;
+
+        // 한글 호환 자모
+        if (code >= 0x3200 && code <= 0x321E) return true;
+        if (code >= 0x3260 && code <= 0x327F) return true;
+
+        // 영문 대소문자, 숫자
+        if ((code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A)) return true;
+        if (code >= 0x30 && code <= 0x39) return true;
+
+        // 기본 문장부호 및 특수문자
+        if (code >= 0x20 && code <= 0x2F) return true; // 공백, !, ", #, $, %, &, ', (, ), *, +, ,, -, ., /
+        if (code >= 0x3A && code <= 0x40) return true; // :, ;, <, =, >, ?, @
+        if (code >= 0x5B && code <= 0x60) return true; // [, \, ], ^, _, `
+        if (code >= 0x7B && code <= 0x7E) return true; // {, |, }, ~
+
+        // 한글 문장부호
+        if (code === 0x3001 || code === 0x3002) return true; // 、 。
+        if (code >= 0x3008 && code <= 0x3011) return true; // 「」『』【】
+        if (code === 0x00B7) return true; // ·
+
+        // 전각 문자
+        if (code >= 0xFF01 && code <= 0xFF5E) return true;
 
         return false;
     }
