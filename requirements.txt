@@ -1,0 +1,4 @@
+flask>=2.3.0
+olefile>=0.46
+pyhwp>=0.1b15
+gunicorn>=21.2.0

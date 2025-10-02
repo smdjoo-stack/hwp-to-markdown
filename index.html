@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWP to Markdown - 한글 문서를 마크다운으로</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="50" height="50" rx="10" fill="#4F46E5"/>
+                    <path d="M15 20H35M15 25H35M15 30H28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h1>HWP to Markdown</h1>
+            <p class="subtitle">한글 문서(.hwp)를 마크다운으로 간편하게 변환하세요</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="upload-box" id="uploadBox">
+                    <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <h2>HWP 파일을 드래그하거나 클릭하세요</h2>
+                    <p>여러 파일을 동시에 선택할 수 있습니다</p>
+                    <input type="file" id="fileInput" accept=".hwp" multiple hidden>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                        파일 선택
+                    </button>
+                </div>
+
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-details">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                        </svg>
+                        <div>
+                            <p class="file-name" id="fileName"></p>
+                            <p class="file-size" id="fileSize"></p>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" onclick="resetUpload()">다시 선택</button>
+                </div>
+
+                <div class="loading" id="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>변환 중...</p>
+                </div>
+
+                <div class="result-section" id="resultSection" style="display: none;">
+                    <div class="result-header">
+                        <h3>변환 완료!</h3>
+                        <div class="result-actions">
+                            <button class="btn-primary" onclick="downloadMarkdown()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                다운로드
+                            </button>
+                            <button class="btn-secondary" onclick="copyToClipboard()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                                복사
+                            </button>
+                        </div>
+                    </div>
+                    <div class="preview-box">
+                        <pre id="markdownPreview"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <section class="features">
+                <h2>주요 기능</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>빠른 변환</h3>
+                        <p>몇 초 안에 HWP 파일을 마크다운으로 변환합니다</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>안전한 처리</h3>
+                        <p>파일은 서버에 저장되지 않고 즉시 처리됩니다</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>깔끔한 형식</h3>
+                        <p>제목, 본문을 자동으로 마크다운 형식으로 변환</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💾</div>
+                        <h3>쉬운 저장</h3>
+                        <p>변환된 파일을 바로 다운로드하거나 복사</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="how-to">
+                <h2>사용 방법</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>파일 업로드</h3>
+                        <p>변환할 HWP 파일을 선택하거나 드래그하세요</p>
+                    </div>
+                    <div class="step-arrow">→</div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>자동 변환</h3>
+                        <p>파일이 자동으로 마크다운 형식으로 변환됩니다</p>
+                    </div>
+                    <div class="step-arrow">→</div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>다운로드</h3>
+                        <p>변환된 .md 파일을 다운로드하거나 복사하세요</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 HWP to Markdown Converter</p>
+            <p class="footer-note">이 도구는 HWP 5.x 형식을 지원합니다</p>
+        </footer>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
