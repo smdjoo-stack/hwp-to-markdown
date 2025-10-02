@@ -106,7 +106,7 @@ function formatFileSize(bytes) {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-// 여러 파일 병렬 변환
+// 여러 파일 병렬 변환 (클라이언트 사이드)
 async function convertFiles(files) {
     // 로딩 표시
     fileInfo.style.display = 'none';
@@ -119,55 +119,32 @@ async function convertFiles(files) {
         const total = files.length;
         const loadingText = document.querySelector('.loading p');
 
-        if (files.length === 1) {
-            // 단일 파일 - 기존 API 사용
-            const formData = new FormData();
-            formData.append('file', files[0]);
+        // 병렬로 파일 변환
+        const promises = files.map(async (file, index) => {
+            try {
+                if (loadingText) {
+                    loadingText.textContent = `변환 중... (${index + 1}/${total})`;
+                }
 
-            const response = await fetch('/api/convert', {
-                method: 'POST',
-                body: formData
-            });
+                const parser = new HWPParser(file);
+                const markdown = await parser.convertToMarkdown();
 
-            if (!response.ok) {
-                throw new Error('변환에 실패했습니다.');
+                return {
+                    filename: file.name,
+                    markdown: markdown,
+                    success: true
+                };
+            } catch (error) {
+                console.error(`Error converting ${file.name}:`, error);
+                return {
+                    filename: file.name,
+                    error: error.message,
+                    success: false
+                };
             }
+        });
 
-            const data = await response.json();
-            convertedResults = [{
-                filename: files[0].name,
-                markdown: data.markdown,
-                success: true
-            }];
-
-        } else {
-            // 여러 파일 - 병렬 API 사용
-            if (loadingText) {
-                loadingText.textContent = `병렬 변환 중... (${total}개 파일)`;
-            }
-
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('files', file);
-            });
-
-            const response = await fetch('/api/convert-batch', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error('변환에 실패했습니다.');
-            }
-
-            const data = await response.json();
-
-            if (!data.success) {
-                throw new Error(data.error || '변환에 실패했습니다.');
-            }
-
-            convertedResults = data.results;
-        }
+        convertedResults = await Promise.all(promises);
 
         // 결과 표시
         displayResults(convertedResults);
